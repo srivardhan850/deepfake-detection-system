@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deepfake Detection System</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    .container { max-width: 600px; margin: auto; }
+    h1 { text-align: center; }
+    form { margin-top: 2rem; }
+    input[type="file"] { display: block; margin-bottom: 1rem; }
+    button { padding: 0.5rem 1.5rem; font-size: 1rem; }
+    .flash { color: green; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Deepfake Detection System</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">
+            {% for message in messages %}
+              <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <form method="POST" action="{{ url_for('upload_video') }}" enctype="multipart/form-data">
+      <label for="video">Upload Video File:</label>
+      <input type="file" id="video" name="video" accept="video/*" />
+      <label for="image">Or Upload Image File:</label>
+      <input type="file" id="image" name="image" accept="image/*" />
+      <button type="submit" style="margin-top: 1rem; padding: 0.75rem 2rem; font-size: 1.1rem; cursor: pointer;">Upload & Process</button>
+    </form>
+    <hr />
+    <p>After uploading a file, <a href="{{ url_for('status') }}">check processing status here</a>.</p>
+  </div>
+</body>
+</html>
