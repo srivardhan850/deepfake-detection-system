@@ -5,64 +5,283 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Processing Status - Deepfake Detection System</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    .container { max-width: 800px; margin: auto; }
-    h1 { text-align: center; }
+    :root {
+      color-scheme: dark;
+      --bg: #02050a;
+      --panel: rgba(8, 16, 28, 0.88);
+      --line: rgba(45, 255, 179, 0.28);
+      --line-strong: rgba(45, 255, 179, 0.58);
+      --text: #e8fff8;
+      --muted: #8fb6ad;
+      --green: #2dffb3;
+      --cyan: #2ccaff;
+      --danger: #ff4d7d;
+      --warn: #ffd166;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 18% 10%, rgba(44, 202, 255, 0.13), transparent 28%),
+                  radial-gradient(circle at 78% 20%, rgba(45, 255, 179, 0.12), transparent 24%),
+                  var(--bg);
+      overflow-x: hidden;
+    }
+
+    #matrix {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      opacity: 0.34;
+    }
+
+    .grid {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image:
+        linear-gradient(rgba(45, 255, 179, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(44, 202, 255, 0.07) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, transparent, black 18%, black 84%, transparent);
+      transform: perspective(800px) rotateX(64deg) translateY(18%);
+      transform-origin: center bottom;
+    }
+
+    .scanline {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, rgba(45, 255, 179, 0.08), transparent);
+      height: 24vh;
+      animation: scan 5.8s linear infinite;
+    }
+
+    @keyframes scan {
+      from { transform: translateY(-35vh); }
+      to { transform: translateY(120vh); }
+    }
+
+    .wrap {
+      width: min(1000px, calc(100% - 32px));
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 42px 0;
+      display: grid;
+      align-content: center;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 1;
+      letter-spacing: 0;
+      text-shadow: 0 0 26px rgba(45, 255, 179, 0.16);
+    }
+
+    .link-button {
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      min-height: 44px;
+      padding: 0 16px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .link-button:hover {
+      color: var(--text);
+      border-color: var(--green);
+      box-shadow: 0 0 28px rgba(45, 255, 179, 0.18);
+    }
+
+    .terminal {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, var(--panel), rgba(2, 8, 16, 0.76));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.56), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .terminal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(45, 255, 179, 0.18);
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.22);
+    }
+
+    .dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 16px rgba(45, 255, 179, 0.42);
+    }
+
+    .dots span:nth-child(2) { background: var(--warn); box-shadow: 0 0 16px rgba(255, 209, 102, 0.35); }
+    .dots span:nth-child(3) { background: var(--danger); box-shadow: 0 0 16px rgba(255, 77, 125, 0.35); }
+
+    .terminal-title {
+      color: var(--green);
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
     pre {
-      background: #f4f4f4;
-      border: 1px solid #ddd;
-      padding: 1rem;
-      height: 400px;
-      overflow-y: scroll;
+      margin: 0;
+      min-height: 440px;
+      max-height: 56vh;
+      overflow: auto;
+      padding: 18px;
       white-space: pre-wrap;
       word-wrap: break-word;
-      font-size: 0.9rem;
+      font: 0.92rem/1.65 Consolas, "Courier New", monospace;
+      color: #c9fff0;
+      background:
+        linear-gradient(rgba(45, 255, 179, 0.04) 50%, transparent 50%) 0 0 / 100% 34px,
+        rgba(0, 0, 0, 0.18);
     }
-    a { text-decoration: none; color: #337ab7; }
-    a:hover { text-decoration: underline; }
+
+    .result {
+      display: none;
+      border: 1px solid var(--line-strong);
+      background: rgba(45, 255, 179, 0.08);
+      color: var(--text);
+      padding: 16px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      box-shadow: 0 0 26px rgba(45, 255, 179, 0.12);
+    }
+
+    .result.fake {
+      border-color: rgba(255, 77, 125, 0.62);
+      background: rgba(255, 77, 125, 0.10);
+    }
+
+    .result.real {
+      border-color: rgba(44, 202, 255, 0.54);
+      background: rgba(44, 202, 255, 0.09);
+    }
+
+    @media (max-width: 680px) {
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      pre {
+        min-height: 360px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Processing Status</h1>
-    <pre id="log-output">{{ logs|join('\n') }}</pre>
-    <div id="result" style="margin-top: 1rem; font-weight: bold; font-size: 1.2rem; color: #2a9d8f;"></div>
-    <p><a href="{{ url_for('index') }}">&#8592; Back to Upload</a></p>
-  </div>
+  <canvas id="matrix" aria-hidden="true"></canvas>
+  <div class="grid" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <div class="topbar">
+      <h1>Processing Status</h1>
+      <a class="link-button" href="{{ url_for('index') }}">Back to Upload</a>
+    </div>
+
+    <section class="terminal">
+      <div class="terminal-head">
+        <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="terminal-title">Live Analysis Log</div>
+      </div>
+      <pre id="log-output">{{ logs|join('\n') }}</pre>
+    </section>
+
+    <div id="result" class="result"></div>
+  </main>
 
   <script>
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    const chars = '01DEEPFAKEAI<>/{}[]SCAN';
+    let drops = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drops = Array(Math.ceil(canvas.width / 18)).fill(0).map(() => Math.random() * -80);
+    }
+
+    function draw() {
+      ctx.fillStyle = 'rgba(2, 5, 10, 0.12)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '15px Consolas, monospace';
+      ctx.fillStyle = '#2dffb3';
+
+      drops.forEach((y, x) => {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, x * 18, y * 18);
+        drops[x] = y * 18 > canvas.height && Math.random() > 0.975 ? 0 : y + 1;
+      });
+
+      requestAnimationFrame(draw);
+    }
+
     async function fetchLogs() {
       try {
         const response = await fetch('/logs');
-        if (!response.ok) {
-          console.error('Failed to fetch logs:', response.statusText);
-          return;
-        }
+        if (!response.ok) return;
+
         const logs = await response.json();
         const logOutput = document.getElementById('log-output');
-        logOutput.textContent = logs.join('\\n');
+        logOutput.textContent = logs.join('\n');
 
-        // Look for result line and display it separately
         const resultDiv = document.getElementById('result');
-        const resultLine = logs.find(line => line.toLowerCase().includes('result:'));
+        const resultLine = [...logs].reverse().find(line => line.toLowerCase().includes('result:'));
         if (resultLine) {
-          // Extract result text after "Result:"
           const parts = resultLine.split('Result:');
           if (parts.length > 1) {
-            resultDiv.textContent = 'Detection Result: ' + parts[1].trim();
+            const value = parts[1].trim();
+            resultDiv.textContent = 'Detection Result: ' + value;
+            resultDiv.style.display = 'block';
+            resultDiv.classList.toggle('fake', value.toLowerCase().includes('fake') || value.toLowerCase().includes('ai generated'));
+            resultDiv.classList.toggle('real', value.toLowerCase().includes('real') || value.toLowerCase().includes('not ai'));
           }
         }
 
-        // Auto scroll to bottom
         logOutput.scrollTop = logOutput.scrollHeight;
       } catch (error) {
         console.error('Error fetching logs:', error);
       }
     }
 
-    // Poll every 3 seconds
+    window.addEventListener('resize', resize);
+    resize();
+    draw();
     setInterval(fetchLogs, 3000);
-    // Initial fetch on page load
     fetchLogs();
   </script>
 </body>

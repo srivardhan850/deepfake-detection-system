@@ -2,9 +2,9 @@
 
 This document provides instructions to install necessary dependencies to run the deepfake detection system successfully on Windows.
 
-## 1. Install FFmpeg
+## 1. Install FFmpeg Optional
 
-FFmpeg is required for extract_frames.py to extract frames from videos.
+The project now uses OpenCV first for video frame extraction. Install FFmpeg only if your video format does not open correctly.
 
 ### Steps:
 
@@ -41,7 +41,7 @@ FFmpeg is required for extract_frames.py to extract frames from videos.
 Some required Python libraries are missing. Install them using pip:
 
 ```bash
-pip install opencv-python torch torchvision timm facenet-pytorch
+pip install -r requirements.txt
 ```
 
 - `opencv-python` is required for face alignment.
@@ -49,17 +49,47 @@ pip install opencv-python torch torchvision timm facenet-pytorch
 - `timm` is used for the Xception model.
 - `facenet-pytorch` is required for face detection and alignment using MTCNN.
 
+## 3. Add or Train the Model
 
-## 3. Improve Training Code to Handle Empty Dataset (Optional)
+The web app needs a checkpoint named `best_model.pth` in the project root.
 
-The training script currently crashes if there is no data. You may want to update `train_xception_training.py` to add a check before training starts to ensure dataset is not empty.
+If you already have a trained checkpoint, place it here:
 
-You can add at the start of `main()` or training function:
+```text
+deepfake-detection-system/best_model.pth
+```
 
-```python
-if len(train_loader.dataset) == 0:
-    print("Training dataset is empty. Please check preprocessing steps.")
-    return
+If you need to train one, prepare a dataset with this structure:
+
+```text
+dataset/
+  real/
+    video_or_person_1/
+      aligned_faces/
+        image1.jpg
+  fake/
+    video_or_person_2/
+      aligned_faces/
+        image1.jpg
+```
+
+Then run:
+
+```bash
+python train_xception_training.py --dataset ./dataset --epochs 10 --batch-size 32 --output best_model.pth
+```
+
+
+## 4. Run the App
+
+```bash
+python app.py
+```
+
+Open:
+
+```text
+http://127.0.0.1:5000
 ```
 
 ---

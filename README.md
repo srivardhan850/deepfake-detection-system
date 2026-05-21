@@ -1,19 +1,36 @@
 # Deepfake Detection System
 
-This project provides tools and scripts for preprocessing videos and training a deepfake detection model using the Xception architecture.
+This project provides a Flask web app plus training and preprocessing scripts for deepfake detection using an Xception image classifier on aligned face crops.
 
 ## Prerequisites
 
-- Python 3.7 or higher
-- ffmpeg installed and available in your system PATH
+- Python 3.10 recommended
+- FFmpeg optional. Video frame extraction uses OpenCV first and falls back to FFmpeg if needed.
+- A trained model checkpoint named `best_model.pth` in the project root
 
 ## Installation
 
 To install the required Python dependencies, run:
 
 ```bash
-pip install torch torchvision facenet-pytorch timm scikit-learn numpy Pillow
+pip install -r requirements.txt
 ```
+
+## Run the Web App
+
+After installing dependencies and placing `best_model.pth` in the project root:
+
+```bash
+python app.py
+```
+
+Open:
+
+```text
+http://127.0.0.1:5000
+```
+
+The app accepts images and videos. Videos are processed by extracting frames, detecting faces, predicting each detected face, and averaging the fake probability. The app does not train a model during upload.
 
 ## Preprocessing
 
@@ -64,16 +81,17 @@ dataset/
 Once your dataset is ready, start training with:
 
 ```bash
-python deepfake-detection-system/train_xception_training.py
+python train_xception_training.py --dataset ./dataset --epochs 10 --batch-size 32 --output best_model.pth
 ```
 
-The script defaults to using `./dataset/` as dataset root and trains for 10 epochs. Model checkpoints are saved as `best_model.pth`.
+The script defaults to using `./dataset/` as dataset root and saves the best checkpoint as `best_model.pth`.
 
 ## Notes
 
 - The training script will automatically use GPU if available.
-- Ensure `ffmpeg` is installed and accessible to use the frame extraction script.
+- Install FFmpeg only if OpenCV cannot read your video format.
 - Adjust FPS and image size parameters as needed to fit your dataset requirements.
+- Accuracy depends on the dataset. A model trained on a tiny or one-class dataset will not be reliable.
 
 ---
 

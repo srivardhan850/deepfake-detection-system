@@ -4,6 +4,7 @@ import torch
 from facenet_pytorch import MTCNN
 import argparse
 from PIL import Image
+from torchvision.transforms.functional import to_pil_image
 
 def detect_and_align_faces(frame_dir, output_dir, image_size=224, device='cuda' if torch.cuda.is_available() else 'cpu'):
     """
@@ -38,7 +39,11 @@ def detect_and_align_faces(frame_dir, output_dir, image_size=224, device='cuda' 
         for i, box in enumerate(boxes):
             # Crop and save each detected face
             face_aligned = mtcnn.extract(img, [box], save_path=None)[0]
-            face_img = face_aligned.resize((image_size, image_size))
+            if torch.is_tensor(face_aligned):
+                face_img = to_pil_image(face_aligned.cpu()).convert('RGB')
+            else:
+                face_img = face_aligned.convert('RGB')
+            face_img = face_img.resize((image_size, image_size))
             save_path = os.path.join(output_dir, f"{os.path.splitext(frame_file)[0]}_face{i+1}.jpg")
             face_img.save(save_path)
 

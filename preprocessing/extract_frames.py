@@ -1,6 +1,8 @@
 import os
 import subprocess
 import argparse
+import cv2
+import math
 
 def extract_frames(video_path, output_dir, fps=1):
     """
@@ -14,7 +16,10 @@ def extract_frames(video_path, output_dir, fps=1):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # ffmpeg command to extract frames
+    if extract_frames_with_opencv(video_path, output_dir, fps):
+        return
+
+    # Fallback ffmpeg command to extract frames
     command = [
         'ffmpeg',
         '-i', video_path,
@@ -32,6 +37,38 @@ def extract_frames(video_path, output_dir, fps=1):
     except subprocess.CalledProcessError as e:
         print(f"ffmpeg command failed with error: {e}")
         raise e
+
+
+def extract_frames_with_opencv(video_path, output_dir, fps=1):
+    capture = cv2.VideoCapture(video_path)
+    if not capture.isOpened():
+        print("OpenCV could not open the video. Trying ffmpeg fallback.")
+        return False
+
+    source_fps = capture.get(cv2.CAP_PROP_FPS)
+    if not source_fps or math.isnan(source_fps) or source_fps <= 0:
+        source_fps = 30
+
+    frame_interval = max(1, int(round(source_fps / max(fps, 1))))
+    saved_count = 0
+    frame_index = 0
+
+    print(f"Extracting frames from {video_path} at {fps} fps into {output_dir}")
+    while True:
+        success, frame = capture.read()
+        if not success:
+            break
+
+        if frame_index % frame_interval == 0:
+            saved_count += 1
+            output_path = os.path.join(output_dir, f"frame_{saved_count:06d}.jpg")
+            cv2.imwrite(output_path, frame)
+
+        frame_index += 1
+
+    capture.release()
+    print(f"Frame extraction completed. Saved {saved_count} frames.")
+    return saved_count > 0
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract frames from video using ffmpeg")
